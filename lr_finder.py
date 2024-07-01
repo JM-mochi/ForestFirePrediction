@@ -1,5 +1,4 @@
 import torch
-import intel_extension_for_pytorch
 from tqdm import tqdm
 import numpy as np
 from tabulate import tabulate
