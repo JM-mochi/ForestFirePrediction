@@ -14,7 +14,7 @@ import cv2
 from albumentations import HorizontalFlip, VerticalFlip, RandomRotate90, Compose
 
 imagenet_stats = [[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]]
-data_dir = pathlib.Path("./data/colorEnhanced/")
+data_dir = pathlib.Path("/content/drive/MyDrive/jpg")
 TRAIN_DIR = data_dir / "train"
 VALID_DIR = data_dir / "val"
 
@@ -44,7 +44,7 @@ def augment_and_save(path, target_number=1000):
     """augment dataset if total number per class is less than 1000 and save to data dir."""
     subfolders = [f.path for f in os.scandir(path) if f.is_dir()]
     for subfolder in subfolders:
-        images = fnmatch.filter(os.listdir(subfolder), "*.png")
+        images = fnmatch.filter(os.listdir(subfolder), "*.jpg")
         augmentations_per_image = max(target_number // len(images), 1)
         augmentations = Compose(
             [
@@ -93,7 +93,7 @@ def data_distribution(dataset, path: str) -> dict:
     Returns a dictionary with the distribution of each class in the dataset.
     """
     class_counts = {
-        cls: len(fnmatch.filter(os.listdir(f"{path}/{cls}"), "*.png"))
+        cls: len(fnmatch.filter(os.listdir(f"{path}/{cls}"), "*.jpg"))
         for cls in dataset.class_to_idx.keys()
     }
     return class_counts
