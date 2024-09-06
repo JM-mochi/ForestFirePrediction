@@ -72,13 +72,13 @@ class Trainer:
             total_correct += correct
             total_samples += batch_size
             acc = total_correct / total_samples
-            # if self.use_wandb:
-            #     wandb.log(
-            #         {
-            #             "Training Loss": total_loss / len(train_dataloader),
-            #             "Training Acc": acc,
-            #         }
-            #     )
+            if self.use_wandb:
+                wandb.log(
+                    {
+                        "Training Loss": total_loss / len(train_dataloader),
+                        "Training Acc": acc,
+                    }
+                )
         return total_loss / len(train_dataloader), acc
 
     @torch.no_grad()
@@ -93,13 +93,13 @@ class Trainer:
             total_correct += correct
             total_samples += batch_size
             acc = total_correct / total_samples
-            # if self.use_wandb:
-            #     wandb.log(
-            #         {
-            #             "Validation Loss": total_loss / len(valid_dataloader),
-            #             "Validation Acc": acc,
-            #         }
-            #     )
+            if self.use_wandb:
+                wandb.log(
+                    {
+                        "Validation Loss": total_loss / len(valid_dataloader),
+                        "Validation Acc": acc,
+                    }
+                )
         self.scheduler.step(total_loss / len(valid_dataloader))
         return total_loss / len(valid_dataloader), acc
 
