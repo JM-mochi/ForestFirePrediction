@@ -17,7 +17,7 @@ class Trainer:
         epochs=10,
         precision="fp32",
         device=device,
-        use_wandb=False,
+        use_wandb=True,
         use_ipex=False,
     ):
         self.use_ipex = use_ipex
