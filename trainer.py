@@ -2,7 +2,7 @@ import torch
 import os
 from tqdm import tqdm
 import time
-#import wandb
+import wandb
 from config import device
 
 
@@ -17,11 +17,11 @@ class Trainer:
         epochs=10,
         precision="fp32",
         device=device,
-        #use_wandb=False,
+        use_wandb=False,
         use_ipex=False,
     ):
         self.use_ipex = use_ipex
-        #self.use_wandb = use_wandb
+        self.use_wandb = use_wandb
         self.device = device
         self.model = model.to(self.device)
         self.loss_fn = torch.nn.CrossEntropyLoss()
@@ -106,10 +106,10 @@ class Trainer:
     def fine_tune(self, train_dataloader, valid_dataloader):
         if self.use_ipex:
             self._to_ipex()
-        # if self.use_wandb:
-        #     import os
-        #     print(os.environ["WANDB_DIR"])
-        #     wandb.init(project="fire-finder", name="fire-finder", dir="./wandb_logs")
+        if self.use_wandb:
+            import os
+            print(os.environ["WANDB_DIR"])
+            wandb.init(project="fire-finder", name="fire-finder", dir="./wandb_logs")
         for epoch in range(self.epochs):
             t_epoch_start = time.time()
             t_epoch_loss, t_epoch_acc = self.train(train_dataloader)
@@ -125,17 +125,17 @@ class Trainer:
                 f", 📈 Accuracy: {v_epoch_acc:.4f}\n"
                 f"⏱️ Time: {t_epoch_end - t_epoch_start:.4f} sec\n"
             )
-            # if self.use_wandb:
-            #     wandb.log(
-            #         {
-            #             "Train Loss": t_epoch_loss,
-            #             "Train Acc": t_epoch_acc,
-            #             "Valid Loss": v_epoch_loss,
-            #             "Valid Acc": v_epoch_acc,
-            #             "Time": t_epoch_end - t_epoch_start,
-            #         }
-            #     )
+            if self.use_wandb:
+                wandb.log(
+                    {
+                        "Train Loss": t_epoch_loss,
+                        "Train Acc": t_epoch_acc,
+                        "Valid Loss": v_epoch_loss,
+                        "Valid Acc": v_epoch_acc,
+                        "Time": t_epoch_end - t_epoch_start,
+                    }
+                )
 
-        # if self.use_wandb:
-        #     wandb.finish()
+        if self.use_wandb:
+            wandb.finish()
         return int(v_epoch_acc * 100)
