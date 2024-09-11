@@ -6,7 +6,7 @@ import wandb
 from config import device
 
 class Trainer:
-"""Trainer class that takes care of training and validation passes."""
+    """Trainer class that takes care of training and validation passes."""
 
     def __init__(
         self,
