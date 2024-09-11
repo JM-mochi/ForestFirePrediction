@@ -142,8 +142,8 @@ class Trainer:
             wandb.init(project="FireFinder", name="FireFinder", dir="./wandb_logs")
         for epoch in range(self.epochs):
             t_epoch_start = time.time()
-            t_epoch_loss, t_epoch_acc = self.train_one_epoch(train_dataloader)
-            v_epoch_loss, v_epoch_acc = self.validate_one_epoch(valid_dataloader)
+            t_epoch_loss, t_epoch_acc, train_preds, train_labels = self.train_one_epoch(train_dataloader)
+            v_epoch_loss, v_epoch_acc, valid_preds, valid_labels = self.validate_one_epoch(valid_dataloader)
             t_epoch_end = time.time()
             print(
                 f"\n📅 Epoch {epoch+1}/{self.epochs}:\n"
