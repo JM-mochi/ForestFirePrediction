@@ -137,7 +137,7 @@ class Trainer:
                     }
                 )
     
-    if self.use_wandb:
-        wandb.finish()
-    return int(v_epoch_acc * 100)
+        if self.use_wandb:
+            wandb.finish()
+        return int(v_epoch_acc * 100)
     
