@@ -18,7 +18,7 @@ class Trainer:
         device=device,
         use_wandb=True,
         use_ipex=False,
-        ):
+    ):
         self.use_ipex = use_ipex
         self.use_wandb = use_wandb
         self.device = device
@@ -31,7 +31,7 @@ class Trainer:
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer, "min", verbose=True
         )
-        
+
     def forward_pass(self, inputs, labels):
         """Perform forward pass of models with `inputs`,
         calculate loss and accuracy and return it.
@@ -41,9 +41,9 @@ class Trainer:
         preds = outputs.argmax(dim=1, keepdim=True)
         correct = preds.eq(labels.view_as(preds)).sum().item()
         total = labels.numel()
-        return loss, correct, total, preds, labels  # preds, labels 추가 
-    
-    #*************************** Exercise 2 ***************************************
+        return loss, correct, total, preds, labels  # preds, labels 추가
+
+    # *************************** Exercise 2 ***************************************
     def _to_ipex(self, dtype=torch.float32):
         """convert model memory format to channels_last to IPEX format."""
         self.model.train()
@@ -51,53 +51,52 @@ class Trainer:
         self.model, self.optimizer = ipex.optimize(
             self.model, optimizer=self.optimizer, dtype=torch.float32
         )
-    #******************************************************************************
-    
-     def train_one_epoch(self, train_dataloader):
-            """Training loop for one epoch, return epoch loss, accuracy, predictions, and labels."""
-            self.model.train()
-            total_loss, total_correct, total_samples = 0.0, 0, 0
-            all_preds = []
-            all_labels = []
+    # ******************************************************************************
 
-            for inputs, labels in tqdm(train_dataloader):
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                self.optimizer.zero_grad()
+    def train_one_epoch(self, train_dataloader):
+        """Training loop for one epoch, return epoch loss, accuracy, predictions, and labels."""
+        self.model.train()
+        total_loss, total_correct, total_samples = 0.0, 0, 0
+        all_preds = []
+        all_labels = []
 
-                # Forward pass (precision option remains the same)
-                if self.precision == "bf16":
-                    with getattr(torch, f"{self.device.type}.amp.autocast")():
-                        loss, correct, batch_size, preds, labels = self.forward_pass(inputs, labels)
-                else:
+        for inputs, labels in tqdm(train_dataloader):
+            inputs, labels = inputs.to(self.device), labels.to(self.device)
+            self.optimizer.zero_grad()
+
+            # Forward pass (precision option remains the same)
+            if self.precision == "bf16":
+                with getattr(torch, f"{self.device.type}.amp.autocast")():
                     loss, correct, batch_size, preds, labels = self.forward_pass(inputs, labels)
+            else:
+                loss, correct, batch_size, preds, labels = self.forward_pass(inputs, labels)
 
-                # Backpropagation
-                loss.backward()
-                self.optimizer.step()
+            # Backpropagation
+            loss.backward()
+            self.optimizer.step()
 
-                # Update metrics
-                total_loss += loss.item()
-                total_correct += correct
-                total_samples += batch_size
+            # Update metrics
+            total_loss += loss.item()
+            total_correct += correct
+            total_samples += batch_size
 
-                # Flatten predictions to ensure correct format (if it's probabilistic output, take max or threshold)
-                preds = torch.argmax(preds, dim=1) if preds.ndim > 1 else preds  # Use argmax for multi-class or keep if binary
-                all_preds.append(preds)
-                all_labels.append(labels)
+            # Flatten predictions to ensure correct format (if it's probabilistic output, take max or threshold)
+            preds = torch.argmax(preds, dim=1) if preds.ndim > 1 else preds  # Use argmax for multi-class or keep if binary
+            all_preds.append(preds)
+            all_labels.append(labels)
 
-                acc = total_correct / total_samples
-                if self.use_wandb:
-                    wandb.log(
-                        {
-                            "Training Loss": total_loss / len(train_dataloader),
-                            "Training Acc": acc,
-                        }
-                    )
+            acc = total_correct / total_samples
+            if self.use_wandb:
+                wandb.log(
+                    {
+                        "Training Loss": total_loss / len(train_dataloader),
+                        "Training Acc": acc,
+                    }
+                )
 
-            return total_loss / len(train_dataloader), acc, torch.cat(all_preds), torch.cat(all_labels)
+        return total_loss / len(train_dataloader), acc, torch.cat(all_preds), torch.cat(all_labels)
 
-
-    @torch.no_grad()
+    @torch.no_grad()  # Ensure this decorator is at the same indentation level as the function definition
     def validate_one_epoch(self, valid_dataloader):
         """Validation loop for one epoch, return epoch loss, accuracy, predictions, and labels."""
         self.model.eval()
@@ -132,9 +131,8 @@ class Trainer:
 
         self.scheduler.step(total_loss / len(valid_dataloader))
         return total_loss / len(valid_dataloader), acc, torch.cat(all_preds), torch.cat(all_labels)
-    
-    
-            
+
+
     def fine_tune(self, train_dataloader, valid_dataloader):
         if self.use_ipex:
             self._to_ipex()
@@ -167,8 +165,7 @@ class Trainer:
                         "Time": t_epoch_end - t_epoch_start,
                     }
                 )
-    
+
         if self.use_wandb:
             wandb.finish()
         return int(v_epoch_acc * 100)
-    
