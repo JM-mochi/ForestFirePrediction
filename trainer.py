@@ -80,27 +80,27 @@ class Trainer:
                     )
             return total_loss / len(train_dataloader), acc
             
-        @torch.no_grad()
-        def validate(self, valid_dataloader):
-            """Validation loop, return validation epoch loss and accuracy."""
-            self.model.eval()
-            total_loss, total_correct, total_samples = 0.0, 0, 0
-            for inputs, labels in tqdm(valid_dataloader):
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                loss, correct, batch_size = self.forward_pass(inputs, labels)
-                total_loss += loss.item()
-                total_correct += correct
-                total_samples += batch_size
-                acc = total_correct / total_samples
-                if self.use_wandb:
-                    wandb.log(
-                        {
-                            "Validation Loss": total_loss / len(valid_dataloader),
-                            "Validation Acc": acc,
-                        }
-                    )
-            self.scheduler.step(total_loss / len(valid_dataloader))
-            return total_loss / len(valid_dataloader), acc
+    @torch.no_grad()
+    def validate(self, valid_dataloader):
+        """Validation loop, return validation epoch loss and accuracy."""
+        self.model.eval()
+        total_loss, total_correct, total_samples = 0.0, 0, 0
+        for inputs, labels in tqdm(valid_dataloader):
+            inputs, labels = inputs.to(self.device), labels.to(self.device)
+            loss, correct, batch_size = self.forward_pass(inputs, labels)
+            total_loss += loss.item()
+            total_correct += correct
+            total_samples += batch_size
+            acc = total_correct / total_samples
+            if self.use_wandb:
+                wandb.log(
+                    {
+                        "Validation Loss": total_loss / len(valid_dataloader),
+                        "Validation Acc": acc,
+                    }
+                )
+        self.scheduler.step(total_loss / len(valid_dataloader))
+        return total_loss / len(valid_dataloader), acc
     
     
             
