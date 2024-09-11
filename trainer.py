@@ -53,23 +53,38 @@ class Trainer:
         )
     #******************************************************************************
     
-    def train(self, train_dataloader):
-            """Training loop, return epoch loss and accuracy."""
+     def train_one_epoch(self, train_dataloader):
+            """Training loop for one epoch, return epoch loss, accuracy, predictions, and labels."""
             self.model.train()
             total_loss, total_correct, total_samples = 0.0, 0, 0
+            all_preds = []
+            all_labels = []
+
             for inputs, labels in tqdm(train_dataloader):
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
+
+                # Forward pass (precision option remains the same)
                 if self.precision == "bf16":
                     with getattr(torch, f"{self.device.type}.amp.autocast")():
-                        loss, correct, batch_size = self.forward_pass(inputs, labels)
+                        loss, correct, batch_size, preds, labels = self.forward_pass(inputs, labels)
                 else:
-                    loss, correct, batch_size = self.forward_pass(inputs, labels)
+                    loss, correct, batch_size, preds, labels = self.forward_pass(inputs, labels)
+
+                # Backpropagation
                 loss.backward()
                 self.optimizer.step()
+
+                # Update metrics
                 total_loss += loss.item()
                 total_correct += correct
                 total_samples += batch_size
+
+                # Flatten predictions to ensure correct format (if it's probabilistic output, take max or threshold)
+                preds = torch.argmax(preds, dim=1) if preds.ndim > 1 else preds  # Use argmax for multi-class or keep if binary
+                all_preds.append(preds)
+                all_labels.append(labels)
+
                 acc = total_correct / total_samples
                 if self.use_wandb:
                     wandb.log(
@@ -78,19 +93,34 @@ class Trainer:
                             "Training Acc": acc,
                         }
                     )
-            return total_loss / len(train_dataloader), acc
-            
+
+            return total_loss / len(train_dataloader), acc, torch.cat(all_preds), torch.cat(all_labels)
+
+
     @torch.no_grad()
-    def validate(self, valid_dataloader):
-        """Validation loop, return validation epoch loss and accuracy."""
+    def validate_one_epoch(self, valid_dataloader):
+        """Validation loop for one epoch, return epoch loss, accuracy, predictions, and labels."""
         self.model.eval()
         total_loss, total_correct, total_samples = 0.0, 0, 0
+        all_preds = []
+        all_labels = []
+
         for inputs, labels in tqdm(valid_dataloader):
             inputs, labels = inputs.to(self.device), labels.to(self.device)
-            loss, correct, batch_size = self.forward_pass(inputs, labels)
+
+            # Forward pass
+            loss, correct, batch_size, preds, labels = self.forward_pass(inputs, labels)
+
+            # Update metrics
             total_loss += loss.item()
             total_correct += correct
             total_samples += batch_size
+
+            # Flatten predictions for ROC curve compatibility
+            preds = torch.argmax(preds, dim=1) if preds.ndim > 1 else preds  # Use argmax if multi-class, else keep
+            all_preds.append(preds)
+            all_labels.append(labels)
+
             acc = total_correct / total_samples
             if self.use_wandb:
                 wandb.log(
@@ -99,8 +129,9 @@ class Trainer:
                         "Validation Acc": acc,
                     }
                 )
+
         self.scheduler.step(total_loss / len(valid_dataloader))
-        return total_loss / len(valid_dataloader), acc
+        return total_loss / len(valid_dataloader), acc, torch.cat(all_preds), torch.cat(all_labels)
     
     
             
