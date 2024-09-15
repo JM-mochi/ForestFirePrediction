@@ -155,6 +155,14 @@ class Trainer:
                 f", 📈 Accuracy: {v_epoch_acc:.4f}\n"
                 f"⏱️ Time: {t_epoch_end - t_epoch_start:.4f} sec\n"
             )
+            df = pd.DataFrame({
+               'epoch': EPOCHS,
+               'Train Loss': t_epoch_loss,
+               'Validation Loss': v_epoch_loss,
+               'Train Accuracy': t_epoch_acc,
+               'Validation Accuracy': v_epoch_acc
+            })
+            
             if self.use_wandb:
                 wandb.log(
                     {
