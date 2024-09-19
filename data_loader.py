@@ -14,10 +14,9 @@ import cv2
 from albumentations import HorizontalFlip, VerticalFlip, RandomRotate90, Compose
 
 imagenet_stats = [[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]]
-data_dir1 = pathlib.Path("/content/drive/MyDrive/LANDSAT-8_jpg/jpg")
-data_dir2 = pathlib.Path("/content/drive/MyDrive/jpg_test2/jpg")
-TRAIN_DIR = data_dir1 / "train"
-VALID_DIR = data_dir2 / "val"
+data_dir = pathlib.Path("/content/drive/MyDrive/jpg_2017_test/jpg")
+TRAIN_DIR = data_dir / "train"
+VALID_DIR = data_dir / "val"
 
 
 img_transforms = {
